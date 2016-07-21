@@ -1,0 +1,208 @@
+allprojects {
+    apply plugin: 'idea'
+    group = 'fk.sp.giftmaster'
+}
+
+subprojects {
+    apply plugin: 'java'
+
+
+    buildscript {
+        repositories {
+            mavenCentral()
+        }
+    }
+
+    dependencies {
+        repositories {
+            maven { url 'http://artifactory.nm.flipkart.com:8081/artifactory/libs-releases' }
+            maven { url 'http://artifactory.nm.flipkart.com:8081/artifactory/libs-snapshots' }
+            mavenCentral()
+        }
+
+        compile localGroovy()
+
+        compile 'joda-time:joda-time:2.3',
+                'org.jadira.usertype:usertype.jodatime:2.0.1',
+                'org.jadira.usertype:usertype.spi:2.0.1',
+                'com.google.guava:guava:15.0',
+                'mysql:mysql-connector-java:5.1.28',
+                'org.hibernate:hibernate-entitymanager:4.3.5.Final',
+                'org.hibernate:hibernate-envers:4.3.5.Final'
+
+        compile 'fk.sp.common:event-publisher:0.6.40'
+        compile 'io.dropwizard:dropwizard-core:' + dropwizardVersion
+
+
+
+        compile 'io.dropwizard:dropwizard-jdbi:' + dropwizardVersion,
+                'io.dropwizard:dropwizard-migrations:' + dropwizardVersion,
+                'io.dropwizard.modules:dropwizard-java8:' + dropwizardVersion + '-1'
+
+
+
+        compile('com.hubspot.dropwizard:dropwizard-guice:' + '0.7.0.2') {
+            exclude group: 'com.google.inject', module: 'guice_servlet'
+        }
+
+        compile('fk.sp.common:common-extensions:' + commonExtentions) {
+            exclude group: 'org.hibernate', module: 'hibernate-validator'
+        }
+
+
+        compile('io.dropwizard:dropwizard-testing:0.7.1') {
+            exclude group: 'com.yammer.dropwizard', module: 'dropwizard-testing'
+        }
+
+        compile 'org.projectlombok:lombok:' + lombokVersion
+
+        compile "javax.ws.rs:jsr311-api:1.1.1"
+
+        compile "javax.ws.rs:javax.ws.rs-api:2.0"
+
+        compile 'com.sun.jersey:jersey-server:1.18.1'
+        compile 'com.sun.jersey:jersey-core:1.18.1'
+        compile 'com.sun.jersey:jersey-servlet:1.18.1'
+
+        compile 'com.sun.jersey.contribs:jersey-multipart:1.18.1'
+
+        compile 'commons-collections:commons-collections:3.0'
+
+        compile 'com.palominolabs.metrics:metrics-guice:3.1.0'
+        compile 'org.apache.commons:commons-lang3:3.0'
+        compile 'org.apache.commons:commons-csv:1.0'
+
+        compile 'com.sun.jersey:jersey-grizzly2:1.18'
+        testCompile 'com.sun.jersey:jersey-test-framework:1.18'
+
+
+        compile 'com.google.inject.extensions:guice-multibindings:' + guiceVersion,
+                'com.google.inject.extensions:guice-persist:' + guiceVersion
+
+        compile 'org.slf4j:slf4j-api:' + slf4jVersion,
+                'org.slf4j:log4j-over-slf4j:' + slf4jVersion
+
+        compile 'fk.sp.framework:config-dropwizard:0.1.4'
+
+        compile 'com.wordnik:swagger-jaxrs_2.9.1:1.3.1'
+
+        // Flipkart Dependencies
+        compile 'flipkart.scm:java-cas-client:0.0.4',
+                'fk.sp.common:spring-jpa:' + commonExtentions
+
+        compile('fk.sp.common:event-handler:' + commonExtentions) {
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.slf4j', module: 'slf4j-simple'
+        }
+
+
+        compile('fk.sp.selleranalytics:reports:0.1.5') {
+            exclude group: 'flipkart.retail.libraries'
+            exclude group: 'fk.sp.common'
+        }
+        compile 'com.mysema.querydsl:querydsl-sql:3.5.1'
+
+
+        testCompile 'org.hsqldb:hsqldb:2.3.1'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.jukito:jukito:1.3'
+        testCompile 'io.dropwizard:dropwizard-testing:' + dropwizardVersion
+        testCompile 'fk.sp.common:common-test-extensions:' + commonExtentions
+
+
+    }
+
+}
+
+task createWrapper(type: Wrapper) {
+    gradleVersion = '2.1'
+}
+
+
+
+
+project(':manager') {
+
+    apply plugin: 'java'
+
+    test {
+        testLogging.showStandardStreams = true
+    }
+
+    apply plugin: 'maven-publish'
+    dependencies {
+
+
+    }
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+
+
+
+
+ext.mainClassName = 'fk.sp.st.manager.GiftMasterApplication'
+ext.configFile = './src/main/resources/development.yaml'
+ext.appName = 'fk-sp-gift-master'
+ext.hostname = 'localhost'
+
+
+buildscript {
+    apply from: file('gradle/buildscript.gradle'), to: buildscript
+}
+
+
+
+apply from: file("gradle/common.gradle")
+
+subprojects {
+    configurations {
+
+        all*.exclude group: 'log4j', module: 'log4j'
+        all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        all*.exclude group: 'org.slf4j', module: 'slf4j-simple'
+        all*.exclude group: 'org.testng', module: 'testng'
+        all*.exclude group: 'javassist', module: 'javassist'
+    }
+
+    // this is required for entity scanning to work correctly while
+    // running tests from gradle -
+    // http://forums.gradle.org/gradle/topics/regression_with_classloading_in_the_jetty_plugin_with_gradle_1_0_milestone_6
+    sourceSets.main.output.resourcesDir = sourceSets.main.output.classesDir
+    jar {
+
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+
+apply from: file("gradle/swagger.gradle")
+
+apply plugin: 'dropwizard-debian'
+
+dropwizardDebian {
+    adminPort = 45451
+    jmxPort = 45452
+    applicationName = appName
+    parentProject = "manager"
+    javaOpts = "-Xms1024m -Xmx4096m -XX:MaxPermSize=256m"
+    jreVersion = "8"
+    enableLogAggregation = true
+    enableConfigService = true
+    zip64 = true
+}
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
+}
+
+
+
+
+
