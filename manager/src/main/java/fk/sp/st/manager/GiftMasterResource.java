@@ -57,17 +57,16 @@ public class GiftMasterResource {
         return listingInfo;
     }
 
-    @GET
-    @Timed
-    @ExceptionMetered
-    @Path("/getRecommendedProducts")
-    public Response execute() {
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("/getRecommendedProducts")
+  public Response getRecommended(String FSN) throws Exception {
 
-        log.info(
-                "Response Test");
-        getRecommendedProductForEmailId.invoke("", 5000);
-        return Response.ok().build();
-    }
+    log.info("Response Test");
+    getRecommendedProductForEmailId.invoke("");
+    return Response.ok().build();
+  }
 
     public String getAccountIdFromEmail(String email) {
 

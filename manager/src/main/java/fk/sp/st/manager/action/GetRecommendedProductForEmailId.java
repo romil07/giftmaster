@@ -26,11 +26,11 @@ public class GetRecommendedProductForEmailId {
     this.recoClient = recoClient;
   }
 
-  public RecoResponse invoke(String emailId, int budget) {
+  public RecoResponse invoke(String emailId) throws Exception {
 
     String accountId = getAccountId(emailId);
     List<String> stores = recoClient.run(accountId);
-    
+
 
 
     return null;
