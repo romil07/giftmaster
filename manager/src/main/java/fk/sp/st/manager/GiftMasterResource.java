@@ -1,5 +1,6 @@
 package fk.sp.st.manager;
 
+import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -9,6 +10,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,9 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class GiftMasterResource {
 
+  private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
 
-  public GiftMasterResource() {
+  @Inject
+  public GiftMasterResource(GetRecommendedProductForEmailId getRecommendedProductForEmailId) {
 
+    this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
   }
 
   @GET
@@ -28,7 +33,7 @@ public class GiftMasterResource {
 
     log.info(
         "Response Test");
-
+    getRecommendedProductForEmailId.invoke("",5000);
     return Response.ok().build();
   }
 

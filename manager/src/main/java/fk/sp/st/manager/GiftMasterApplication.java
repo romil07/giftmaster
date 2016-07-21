@@ -51,8 +51,9 @@ public class GiftMasterApplication extends Application<GiftMasterConfiguration> 
         .addModule(new HystrixRequestContextModule())
         .addModule(new MetricsInstrumentationModule(bootstrap.getMetricRegistry()))
         .addModule(new GiftMasterModule())
-        .addModule(new JpaWithSpringModule(Sets.newHashSet(),
-                                           jpaProperties))
+        .addModule(new JpaWithSpringModule(
+            Sets.<String>newHashSet(),
+            jpaProperties))
         .enableAutoConfig(
             "fk.sp.common.extensions.jackson",
 
