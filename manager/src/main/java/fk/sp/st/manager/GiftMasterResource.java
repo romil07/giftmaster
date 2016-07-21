@@ -8,6 +8,7 @@ import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
 import fk.sp.st.manager.clients.PriceFromProdIdClient;
 import fk.sp.st.manager.model.ListingInfo;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -15,8 +16,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -27,18 +31,23 @@ public class GiftMasterResource {
 
     private PriceFromProdIdClient priceFromProdIdClient;
     private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
+    private JdbcTemplate jdbcTemplate;
+    private final String query = "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
 
 
     @Inject
-    public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient, GetRecommendedProductForEmailId getRecommendedProductForEmailId) {
+    public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient, GetRecommendedProductForEmailId getRecommendedProductForEmailId,
+                              JdbcTemplate jdbcTemplate) {
         this.priceFromProdIdClient = priceFromProdIdClient;
         this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GET
     @Timed
     @Path("/getBestPrice")
     public ListingInfo execute(@QueryParam("product_id") String productId) {
+        this.getRecommendedFSNs(25, "Male", 1000, "Birthday");
         priceFromProdIdClient.setProductId(productId);
         Object response = priceFromProdIdClient.run();
         Integer price = new Integer(Integer.MAX_VALUE);
@@ -81,6 +90,19 @@ public class GiftMasterResource {
         map.put("amitsingh.c@flipkart.com", "AC1258734875");
 
         return map.get(email);
+    }
+
+    private List<String> getRecommendedFSNs(int age, String sex, int budget, String occasion) {
+        List<String> rows = jdbcTemplate
+                        .query(String.format(query, "fsn_details"), new Object[]{age, sex, budget, occasion},
+                                this::readRow);
+        return rows;
+    }
+
+    private String readRow(ResultSet rs, int n) throws SQLException {
+        String row;
+        row = rs.getString("fsn");
+        return row;
     }
 
 }
