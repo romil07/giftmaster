@@ -4,7 +4,6 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
-
 import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
 import fk.sp.st.manager.clients.PriceFromProdIdClient;
 import fk.sp.st.manager.model.ListingInfo;
@@ -16,7 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -30,11 +29,11 @@ public class GiftMasterResource {
     private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
 
 
-  @Inject
+    @Inject
     public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient, GetRecommendedProductForEmailId getRecommendedProductForEmailId) {
         this.priceFromProdIdClient = priceFromProdIdClient;
-    this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
-  }
+        this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
+    }
 
     @GET
     @Timed
@@ -58,16 +57,31 @@ public class GiftMasterResource {
         return listingInfo;
     }
 
-  @GET
-  @Timed
-  @ExceptionMetered
-  @Path("/getRecommendedProducts")
-  public Response execute() {
+    @GET
+    @Timed
+    @ExceptionMetered
+    @Path("/getRecommendedProducts")
+    public Response execute() {
 
-    log.info(
-        "Response Test");
-    getRecommendedProductForEmailId.invoke("",5000);
-    return Response.ok().build();
-  }
+        log.info(
+                "Response Test");
+        getRecommendedProductForEmailId.invoke("", 5000);
+        return Response.ok().build();
+    }
+
+    public String getAccountIdFromEmail(String email) {
+
+        Map<String, String> map = new HashMap<>();
+        map.put("romil.goyal@flipkart.com", "AC123456789");
+        map.put("rohan.ghosh@flipkart.com", "AC127642369");
+        map.put("ayush.kumar@flipkart.com", "AC124257959");
+        map.put("venkatesha.p@flipkart.com", "AC135897589");
+        map.put("divakar.c@flipkart.com", "AC1465983479");
+        map.put("vidhisha.b@flipkart.com", "AC5894275897");
+        map.put("rohit.kochar@flipkart.com", "AC2375723454");
+        map.put("amitsingh.c@flipkart.com", "AC1258734875");
+
+        return map.get(email);
+    }
 
 }
