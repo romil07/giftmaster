@@ -48,12 +48,6 @@ public class GiftMasterModule extends AbstractModule {
   }
 
   @Provides
-  GraphiteConfig providesGraphiteConfig(
-      final Provider<GiftMasterConfiguration> sellerAnalyticsConfigurationProvider) {
-    return sellerAnalyticsConfigurationProvider.get().getGraphiteConfig();
-  }
-
-  @Provides
   @Singleton
   Client providesJerseyClient(Environment environment,
                               GiftMasterConfiguration GiftMasterConfiguration) {
@@ -82,13 +76,6 @@ public class GiftMasterModule extends AbstractModule {
   @Provides
   Clock providesClock() {
     return Clock.systemDefaultZone();
-  }
-
-  @Provides
-  @Singleton
-  EventConfiguration providesEventConfiguration(
-      final Provider<GiftMasterConfiguration> GiftMasterConfigurationProvider) {
-    return GiftMasterConfigurationProvider.get().getEventConfiguration();
   }
 
 }
