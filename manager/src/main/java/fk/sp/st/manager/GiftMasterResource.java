@@ -39,7 +39,7 @@ public class GiftMasterResource {
     @GET
     @Timed
     @Path("/getBestPrice")
-    public Object execute(@QueryParam("product_id") String productId) {
+    public ListingInfo execute(@QueryParam("product_id") String productId) {
         priceFromProdIdClient.setProductId(productId);
         Object response = priceFromProdIdClient.run();
         Integer price = new Integer(Integer.MAX_VALUE);
@@ -61,6 +61,7 @@ public class GiftMasterResource {
   @GET
   @Timed
   @ExceptionMetered
+  @Path("/getRecommendedProducts")
   public Response execute() {
 
     log.info(
