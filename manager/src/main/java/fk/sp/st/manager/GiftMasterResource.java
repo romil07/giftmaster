@@ -31,6 +31,8 @@ public class GiftMasterResource {
     private final String
             query =
             "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
+    private final String user_occasion_vertical_query =
+            "select vertical from user_vertical where user_type = ? and vertical in (select vertical from occasion_vertical where occasion = ?)";
     private GetEventDetails getEventDetails;
     private Provider<UserServiceClient> userServiceClient;
 
@@ -137,5 +139,23 @@ public class GiftMasterResource {
         map.put("jafsa", list);
 
         return map.get(userId);
+    }
+
+    @GET
+    @Timed
+    @Path("/vertical")
+    public List<String> userOccasionVertical(@QueryParam("user_type") String user_type,
+                                             @QueryParam("occasion_type") String occasion){
+
+        List<String> rows = jdbcTemplate
+                .query(String.format(user_occasion_vertical_query, "fsn_details"), new Object[]{user_type, occasion}, this::readVertical);
+
+        return rows;
+    }
+
+    private String readVertical(ResultSet rs, int n) throws SQLException {
+        String vertical;
+        vertical = rs.getString("vertical");
+        return vertical;
     }
 }
