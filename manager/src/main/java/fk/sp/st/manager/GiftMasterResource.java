@@ -5,6 +5,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import fk.sp.st.manager.action.GetEventDetails;
 import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
+import fk.sp.st.manager.clients.GetImagePathFromSid;
 import fk.sp.st.manager.clients.PriceFromProdIdClient;
 import fk.sp.st.manager.clients.RecoClient;
 import fk.sp.st.manager.clients.UserServiceClient;
@@ -28,32 +29,36 @@ import java.util.*;
 @Path("/gift-master")
 public class GiftMasterResource {
 
-    private PriceFromProdIdClient priceFromProdIdClient;
-    private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
-    private JdbcTemplate jdbcTemplate;
-    private final String
-            query =
-            "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
-    private final String user_occasion_vertical_query =
-            "select vertical from user_vertical where user_type = ? and vertical in (select vertical from occasion_vertical where occasion = ?)";
-    private GetEventDetails getEventDetails;
-    private Provider<UserServiceClient> userServiceClient;
-    private RecoClient recoClient;
+  private PriceFromProdIdClient priceFromProdIdClient;
+  private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
+  private JdbcTemplate jdbcTemplate;
+  private final String
+      query =
+      "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
+  private GetEventDetails getEventDetails;
+  private Provider<UserServiceClient> userServiceClient;
+  private final RecoClient recoClient;
+  private final GetImagePathFromSid getImagePathFromSid;
+  private final String user_occasion_vertical_query =
+      "select vertical from user_vertical where user_type = ? and vertical in (select vertical from occasion_vertical where occasion = ?)";
 
 
-    @Inject
-    public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
-                              GetRecommendedProductForEmailId getRecommendedProductForEmailId,
-                              JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
-                              Provider<UserServiceClient> userServiceClient,
-                              RecoClient recoClient) {
-        this.priceFromProdIdClient = priceFromProdIdClient;
-        this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
-        this.jdbcTemplate = jdbcTemplate;
-        this.getEventDetails = getEventDetails;
-        this.userServiceClient = userServiceClient;
-        this.recoClient = recoClient;
-    }
+
+  @Inject
+  public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
+                            GetRecommendedProductForEmailId getRecommendedProductForEmailId,
+                            JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
+                            Provider<UserServiceClient> userServiceClient,
+                            RecoClient recoClient, GetImagePathFromSid getImagePathFromSid) {
+    this.priceFromProdIdClient = priceFromProdIdClient;
+    this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
+    this.jdbcTemplate = jdbcTemplate;
+    this.getEventDetails = getEventDetails;
+    this.userServiceClient = userServiceClient;
+    this.recoClient = recoClient;
+    this.getImagePathFromSid = getImagePathFromSid;
+  }
+
 
   @GET
   @Timed
@@ -126,6 +131,16 @@ public class GiftMasterResource {
     return userServiceClient.get().withEmailId(email).run();
 
 
+  }
+
+  @GET
+  @Path("/vertical_image")
+  @Timed
+  @ExceptionMetered
+  public GetImagePathFromSid.StoreDetailsResponse getImage(@QueryParam("sid") String storeId) {
+//    String s = "http://10.33.118.143:9000/sourceProductRecoP2P/?&source=ALL_p2p&pid=SKIEAU5F9KZEVMDF&cross=true";
+    String y = "http://sherlock-reco-client.nm.flipkart.com:25280/sherlock/stores/6bo/ffn/adt/select";
+    return getImagePathFromSid.run(storeId);
   }
 
   private List<String> getRecommendedFSNs(int age, String sex, int budget, String occasion) {
