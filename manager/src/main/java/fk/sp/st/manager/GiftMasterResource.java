@@ -3,21 +3,34 @@ package fk.sp.st.manager;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
-import fk.sp.st.manager.action.GetEventDetails;
-import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
-import fk.sp.st.manager.clients.PriceFromProdIdClient;
-import fk.sp.st.manager.clients.UserServiceClient;
-import fk.sp.st.manager.model.ListingInfo;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+
+import fk.sp.st.manager.action.GetEventDetails;
+import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
+import fk.sp.st.manager.clients.PriceFromProdIdClient;
+import fk.sp.st.manager.clients.RecoClient;
+import fk.sp.st.manager.clients.UserServiceClient;
+import fk.sp.st.manager.model.ListingInfo;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,27 +38,27 @@ import java.util.*;
 @Path("/gift-master")
 public class GiftMasterResource {
 
-    private PriceFromProdIdClient priceFromProdIdClient;
-    private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
-    private JdbcTemplate jdbcTemplate;
-    private final String
-            query =
-            "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
-    private GetEventDetails getEventDetails;
-    private Provider<UserServiceClient> userServiceClient;
+  private PriceFromProdIdClient priceFromProdIdClient;
+  private final GetRecommendedProductForEmailId getRecommendedProductForEmailId;
+  private JdbcTemplate jdbcTemplate;
+  private final String
+      query =
+      "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
+  private GetEventDetails getEventDetails;
+  private Provider<UserServiceClient> userServiceClient;
 
 
-    @Inject
-    public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
-                              GetRecommendedProductForEmailId getRecommendedProductForEmailId,
-                              JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
-                              Provider<UserServiceClient> userServiceClient) {
-        this.priceFromProdIdClient = priceFromProdIdClient;
-        this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
-        this.jdbcTemplate = jdbcTemplate;
-        this.getEventDetails = getEventDetails;
-        this.userServiceClient = userServiceClient;
-    }
+  @Inject
+  public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
+                            GetRecommendedProductForEmailId getRecommendedProductForEmailId,
+                            JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
+                            Provider<UserServiceClient> userServiceClient) {
+    this.priceFromProdIdClient = priceFromProdIdClient;
+    this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
+    this.jdbcTemplate = jdbcTemplate;
+    this.getEventDetails = getEventDetails;
+    this.userServiceClient = userServiceClient;
+  }
 
 
     @GET

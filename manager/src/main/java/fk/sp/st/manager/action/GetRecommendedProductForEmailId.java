@@ -26,7 +26,7 @@ public class GetRecommendedProductForEmailId {
   public Object invoke(String accountId) throws Exception {
     List<String> boughtProductId = boughtClient.run(accountId);
 
-    Object res = boughtProductId.stream().map(o -> recoClient.run(o)).reduce(new ArrayList<>(), (a, b) -> {
+    Object res = boughtProductId.stream().map(o -> recoClient.run(o, "cross")).reduce(new ArrayList<>(), (a, b) -> {
       a.addAll(b);
       return a;
     });
