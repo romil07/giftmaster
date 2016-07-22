@@ -88,12 +88,11 @@ public class GiftMasterResource {
   @GET
   @Timed
   @ExceptionMetered
-  @Path("/getRecommendedProducts")
-  public Response getRecommended(String FSN) throws Exception {
+  @Path("/getRecommendedProducts/{accID}")
+  public Object getRecommended(@PathParam("accID") String accId) throws Exception {
 
-    log.info("Response Test");
-    getRecommendedProductForEmailId.invoke("");
-    return Response.ok().build();
+    log.info("Recommended Products for {}", accId);
+    return getRecommendedProductForEmailId.invoke(accId);
   }
 
 
