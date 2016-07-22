@@ -8,12 +8,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response;
 import fk.sp.st.manager.action.GetEventDetails;
 import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
 import fk.sp.st.manager.clients.PriceFromProdIdClient;
+import fk.sp.st.manager.clients.UserServiceClient;
 import fk.sp.st.manager.model.ListingInfo;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,16 +43,19 @@ public class GiftMasterResource {
       query =
       "select fsn from fsn_details where age = ? and sex = ? and price <= ? and occasion = ?";
   private GetEventDetails getEventDetails;
+  private Provider<UserServiceClient> userServiceClient;
 
 
   @Inject
   public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
                             GetRecommendedProductForEmailId getRecommendedProductForEmailId,
-                            JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails) {
+                            JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
+                            Provider<UserServiceClient> userServiceClient) {
     this.priceFromProdIdClient = priceFromProdIdClient;
     this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
     this.jdbcTemplate = jdbcTemplate;
     this.getEventDetails = getEventDetails;
+    this.userServiceClient = userServiceClient;
   }
 
 
@@ -105,19 +109,17 @@ public class GiftMasterResource {
     return getEventDetails.getEventDetails(userId);
   }
 
-  public String getAccountIdFromEmail(String email) {
+  @GET
+  @Path("/user/details")
+  @Timed
+  @ExceptionMetered
+  public UserServiceClient.UserInfo getAccountIdFromEmail(@QueryParam("email") String email) {
 
-    Map<String, String> map = new HashMap<>();
-    map.put("romil.goyal@flipkart.com", "AC123456789");
-    map.put("rohan.ghosh@flipkart.com", "AC127642369");
-    map.put("ayush.kumar@flipkart.com", "AC124257959");
-    map.put("venkatesha.p@flipkart.com", "AC135897589");
-    map.put("divakar.c@flipkart.com", "AC1465983479");
-    map.put("vidhisha.b@flipkart.com", "AC5894275897");
-    map.put("rohit.kochar@flipkart.com", "AC2375723454");
-    map.put("amitsingh.c@flipkart.com", "AC1258734875");
+    log.info(
+        "get User Details for {}", email);
+    return userServiceClient.get().withEmailId(email).run();
 
-    return map.get(email);
+
   }
 
   private List<String> getRecommendedFSNs(int age, String sex, int budget, String occasion) {
