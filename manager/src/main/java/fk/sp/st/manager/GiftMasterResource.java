@@ -6,8 +6,11 @@ import com.codahale.metrics.annotation.Timed;
 import fk.sp.st.manager.action.GetEventDetails;
 import fk.sp.st.manager.action.GetRecommendedProductForEmailId;
 import fk.sp.st.manager.clients.PriceFromProdIdClient;
+import fk.sp.st.manager.clients.RecoClient;
 import fk.sp.st.manager.clients.UserServiceClient;
 import fk.sp.st.manager.model.ListingInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -35,108 +38,128 @@ public class GiftMasterResource {
             "select vertical from user_vertical where user_type = ? and vertical in (select vertical from occasion_vertical where occasion = ?)";
     private GetEventDetails getEventDetails;
     private Provider<UserServiceClient> userServiceClient;
+    private RecoClient recoClient;
 
 
     @Inject
     public GiftMasterResource(PriceFromProdIdClient priceFromProdIdClient,
                               GetRecommendedProductForEmailId getRecommendedProductForEmailId,
                               JdbcTemplate jdbcTemplate, GetEventDetails getEventDetails,
-                              Provider<UserServiceClient> userServiceClient) {
+                              Provider<UserServiceClient> userServiceClient,
+                              RecoClient recoClient) {
         this.priceFromProdIdClient = priceFromProdIdClient;
         this.getRecommendedProductForEmailId = getRecommendedProductForEmailId;
         this.jdbcTemplate = jdbcTemplate;
         this.getEventDetails = getEventDetails;
         this.userServiceClient = userServiceClient;
+        this.recoClient = recoClient;
     }
 
-
-    @GET
-    @Timed
-    @Path("/getBestPrice")
-    public ListingInfo execute(@QueryParam("product_id") String productId) {
-        this.getRecommendedFSNs(25, "Male", 1000, "Birthday");
-        priceFromProdIdClient.setProductId(productId);
-        Object response = priceFromProdIdClient.run();
-        Integer price = new Integer(Integer.MAX_VALUE);
-        String listing_id = "";
-        LinkedHashMap<String, Object>
-                map =
-                (LinkedHashMap<String, Object>) ((LinkedHashMap) ((LinkedHashMap) ((LinkedHashMap) response)
-                        .get("response")).get("RESPONSES")).get("Pricing Response");
-        for (Map.Entry entry : map.entrySet()) {
-            if (price > (Integer) ((LinkedHashMap) entry.getValue()).get("fsp")) {
-                price = (Integer) ((LinkedHashMap) entry.getValue()).get("fsp");
-                listing_id = entry.getKey().toString();
-            }
-        }
-
-        ListingInfo listingInfo = new ListingInfo();
-        listingInfo.setListingId(listing_id);
-        listingInfo.setPrice(price);
-        return listingInfo;
+  @GET
+  @Timed
+  @Path("/getBestPrice")
+  public ListingInfo execute(@QueryParam("product_id") String productId) {
+    this.getRecommendedFSNs(25, "Male", 1000, "Birthday");
+    priceFromProdIdClient.setProductId(productId);
+    Object response = priceFromProdIdClient.run();
+    Integer price = new Integer(Integer.MAX_VALUE);
+    String listing_id = "";
+    LinkedHashMap<String, Object>
+        map =
+        (LinkedHashMap<String, Object>) ((LinkedHashMap) ((LinkedHashMap) ((LinkedHashMap) response)
+            .get("response")).get("RESPONSES")).get("Pricing Response");
+    for (Map.Entry entry : map.entrySet()) {
+      if (price > (Integer) ((LinkedHashMap) entry.getValue()).get("fsp")) {
+        price = (Integer) ((LinkedHashMap) entry.getValue()).get("fsp");
+        listing_id = entry.getKey().toString();
+      }
     }
 
-    @GET
-    @Timed
-    @ExceptionMetered
-    @Path("/getRecommendedProducts/{accID}")
-    public Object getRecommended(@PathParam("accID") String accId) throws Exception {
+    ListingInfo listingInfo = new ListingInfo();
+    listingInfo.setListingId(listing_id);
+    listingInfo.setPrice(price);
+    return listingInfo;
+  }
 
-        log.info("Recommended Products for {}", accId);
-        return getRecommendedProductForEmailId.invoke(accId);
-    }
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("/getRecommendedProducts/{accID}")
+  public Object getRecommended(@PathParam("accID") String accId) throws Exception {
 
+    log.info("Recommended Products for {}", accId);
+    return getRecommendedProductForEmailId.invoke(accId);
+  }
 
-    @GET
-    @Path("/event/details/{user_id}")
-    @Timed
-    @ExceptionMetered
-    public GetEventDetails.EventDetails getEventDetails(@PathParam("user_id") String userId) {
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("/getSimilarProducts/{FSN}")
+  public Object getSimilarProducts(@PathParam("FSN") String fsn) throws Exception {
 
-        log.info(
-                "getEventDetails for {}", userId);
-
-        return getEventDetails.getEventDetails(userId);
-    }
-
-    @GET
-    @Path("/user/details")
-    @Timed
-    @ExceptionMetered
-    public UserServiceClient.UserInfo getAccountIdFromEmail(@QueryParam("email") String email) {
-
-        log.info(
-                "get User Details for {}", email);
-        return userServiceClient.get().withEmailId(email).run();
+    log.info("Similar Products for {}", fsn);
+    return recoClient.run(fsn,"same");
+  }
 
 
-    }
 
-    private List<String> getRecommendedFSNs(int age, String sex, int budget, String occasion) {
-        List<String> rows = jdbcTemplate
-                .query(String.format(query, "fsn_details"), new Object[]{age, sex, budget, occasion},
-                        this::readRow);
-        return rows;
-    }
+  @GET
+  @Path("/event/details/{user_id}")
+  @Timed
+  @ExceptionMetered
+  public GetEventDetails.EventDetails getEventDetails(@PathParam("user_id") String userId) {
 
-    private String readRow(ResultSet rs, int n) throws SQLException {
-        String row;
-        row = rs.getString("fsn");
-        return row;
-    }
+    log.info(
+        "getEventDetails for {}", userId);
+
+    return getEventDetails.getEventDetails(userId);
+  }
+
+  @GET
+  @Path("/user/details")
+  @Timed
+  @ExceptionMetered
+  public UserServiceClient.UserInfo getAccountIdFromEmail(@QueryParam("email") String email) {
+
+    log.info(
+        "get User Details for {}", email);
+    return userServiceClient.get().withEmailId(email).run();
+
+
+  }
+
+  private List<String> getRecommendedFSNs(int age, String sex, int budget, String occasion) {
+    List<String> rows = jdbcTemplate
+        .query(String.format(query, "fsn_details"), new Object[]{age, sex, budget, occasion},
+               this::readRow);
+    return rows;
+  }
+
+  private String readRow(ResultSet rs, int n) throws SQLException {
+    String row;
+    row = rs.getString("fsn");
+    return row;
+  }
 
     @GET
     @Timed
     @Path("/wishlist")
-    public List<String> getWishList(@QueryParam("user_id") String userId) {
-        Map<String, List<String>> map = new HashMap<>();
-        List<String> list = new ArrayList<>();
-        list.add("afjadgh");
-        list.add("afferwgh");
-        list.add("afjafsdgs");
-        list.add("agwerge");
-        list.add("agwegeg");
-        map.put("jafsa", list);
+    public List<FSNDetails> getWishList(@QueryParam("user_id") String userId) {
+        Map<String, List<FSNDetails>> map = new HashMap<>();
+        List<FSNDetails> list = new ArrayList<>();
+        list.add(new FSNDetails("SHTEHHP68F6XZF5E", "http://img6a.flixcart.com/image/watch/p/d/5/1016-b-skmei-400x400-imaegfzcpycgzqnp.jpeg"));
+        list.add(new FSNDetails("WATE66XQVBDHCUTE", "http://img6a.flixcart.com/image/shirt/j/n/d/hlsh008852-dark-denim-highlander-s-400x400-imaejy6gbjmvesfz.jpeg"));
+        map.put("ACC13592967042198203", list);
+
+        List<FSNDetails> list2 = new ArrayList<>();
+        list2.add(new FSNDetails("itme9jff5gzdzvrv", "http://img6a.flixcart.com/image/fabric/e/x/j/jamavimal-202-jellyapparel-400x400-imaeduw4hky8ykc4.jpeg"));
+        list2.add(new FSNDetails("itme79dzfbyvfayw", "http://img5a.flixcart.com/image/watch/u/c/9/ag-005-agile-400x400-imae78shhyhe7zgx.jpeg"));
+        map.put("AC1BO1DVX5LI20XYCD28FP1JPH74EMSC", list2);
+
+        List<FSNDetails> list3 = new ArrayList<>();
+        list3.add(new FSNDetails("itme9jff5gzdzvrv", "http://img6a.flixcart.com/image/fabric/e/x/j/jamavimal-202-jellyapparel-400x400-imaeduw4hky8ykc4.jpeg"));
+        list3.add(new FSNDetails("WATE66XQVBDHCUTE", "http://img5a.flixcart.com/image/watch/u/c/9/ag-005-agile-400x400-imae78shhyhe7zgx.jpeg"));
+        map.put("ACVYSILDYXZ857J4CMM1LZZL7JHZFDC8", list3);
 
         return map.get(userId);
     }
@@ -145,7 +168,7 @@ public class GiftMasterResource {
     @Timed
     @Path("/vertical")
     public List<String> userOccasionVertical(@QueryParam("user_type") String user_type,
-                                             @QueryParam("occasion_type") String occasion){
+                                             @QueryParam("occasion_type") String occasion) {
 
         List<String> rows = jdbcTemplate
                 .query(String.format(user_occasion_vertical_query, "fsn_details"), new Object[]{user_type, occasion}, this::readVertical);
@@ -157,5 +180,12 @@ public class GiftMasterResource {
         String vertical;
         vertical = rs.getString("vertical");
         return vertical;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class FSNDetails {
+        private String fsn;
+        private String image_url;
     }
 }

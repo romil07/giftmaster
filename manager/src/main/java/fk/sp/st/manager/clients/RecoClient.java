@@ -34,17 +34,12 @@ public class RecoClient {
     this.client = client;
   }
 
-  public List<Object> run(String FSN) {
+  public List<Object> run(String FSN, String type) {
     java.net.URI uri = UriBuilder.fromUri(URI).queryParam("source", "ALL_p2p").queryParam("pid", FSN)
         .queryParam("cross", true).path(PATH).build();
 
-//    client.setReadTimeout(0);
-//    client.setConnectTimeout(0);
-
-    int i = 1;
     ClientResponse response = null;
     try {
-      log.info("Trying request {}",i++);
       response =
           client.resource(uri).accept(MediaType.APPLICATION_JSON_TYPE)
               .type(MediaType.APPLICATION_JSON_TYPE)
@@ -63,7 +58,7 @@ public class RecoClient {
       e.printStackTrace();
     }
 
-    List<Object> res = (List<Object>) o.get(1).get("cross");
+    List<Object> res = (List<Object>) o.get(1).get(type);
 
     if (res.size() > 10)
       return res.subList(0, 10);
